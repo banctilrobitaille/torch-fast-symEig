@@ -171,20 +171,18 @@ class Expm(torch.nn.Module):
 class ExpmLogmFunc(torch.autograd.Function):
     @staticmethod
     def forward(ctx, X):
-        b, c, d, h, w = X.size()
         S_log, U = vSymEig(X, eigenvectors=True, flatten_output=True)
 
         ctx.save_for_backward(S_log, torch.exp(S_log), U, X)
 
-        return U.bmm(torch.diag_embed(S_log)).bmm(U.transpose(1, 2)).reshape(
-            b, d * h * w, 3, 3).permute(0, 2, 3, 1).reshape(b, c, d, h, w)
+        return X
 
     @staticmethod
     def backward(ctx, *grad_outputs):
         S_log, S_exp, U, X = ctx.saved_tensors
         b, c, d, h, w = X.size()
 
-        grad_X = grad_outputs[0].reshape(b, 3, 3, d * h * w).permute(0, 3, 1, 2).reshape(b * d * h * w, 3, 3)
+        grad_X = grad_outputs[0].reshape(b, 3, 3, d * h * w).permute(0, 3, 1, 2).reshape(b * d * h * w, 3, 3).double()
 
         # Backward Log
         inv_S = torch.diag_embed(1 / S_exp)
@@ -214,8 +212,7 @@ class ExpmLogmFunc(torch.autograd.Function):
         P[mask_zero] = 0
 
         return U.bmm(_grad_sym(P.transpose(1, 2) * (U.transpose(1, 2).bmm(grad_U))) + grad_S).bmm(
-            U.transpose(1, 2)).reshape(
-            b, d * h * w, 3, 3).permute(0, 2, 3, 1).reshape(b, c, d, h, w), None
+            U.transpose(1, 2)).reshape(b, d * h * w, 3, 3).permute(0, 2, 3, 1).reshape(b, c, d, h, w).float(), None
 
 
 class ExpmLogm(torch.nn.Module):

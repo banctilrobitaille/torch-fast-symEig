@@ -115,7 +115,7 @@ def vSymEig(inputs: torch.Tensor, eigenvectors=False, flatten_output=False, desc
         eig_vals = eig_vals.permute(0, 2, 3, 4, 1).reshape(b * d * h * w, 3)
         eig_vecs = eig_vecs.permute(0, 3, 4, 5, 1, 2).reshape(b * d * h * w, 3, 3) if eigenvectors else eig_vecs
 
-    return eig_vals.float(), eig_vecs.float() if eig_vecs is not None else None
+    return eig_vals, eig_vecs if eig_vecs is not None else None
 
 
 def vExpm(inputs: torch.Tensor, replace_nans=False):
